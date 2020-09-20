@@ -12,22 +12,71 @@ class UpdateBookmark extends Component {
 
   state = {
     error: null,
+    title: null,
+    description: null,
+    url: null,
+    rating: null,
   };
+
+  updateTitle = (e) => {
+    this.setState({ title: e.target.value });
+  }
+
+  updateDescription = (e) => {
+    this.setState({ description: e.target.value });
+  }
+
+  updateUrl = (e) => {
+    this.setState({ url: e.target.value });
+  }
+
+  updateRating = (e) => {
+    this.setState({ rating: e.target.value });
+  }
 
   handleSubmit = e => {
     e.preventDefault()
     // get the form fields from the event
-    const { title, url, description, rating } = e.target
+    const { title, url, description, rating } = this.state;
     const bookmark = {
-      title: title.value,
-      url: url.value,
-      description: description.value,
-      rating: rating.value,
+      title,
+      url,
+      description,
+      rating,
+      id: Number(this.props.match.params.bookmarkId),
     }
     this.setState({ error: null })
-    fetch(config.API_ENDPOINT, {
+    fetch(`${config.API_ENDPOINT}/${bookmark.id}`, {
       method: 'PATCH',
       body: JSON.stringify(bookmark),
+      headers: {
+        'content-type': 'application/json',
+        'authorization': `bearer ${config.API_KEY}`
+      }
+    })
+      .then(res => {
+        console.log(res);
+        if (!res.ok) {
+          // get the error message from the response,
+          return res.json().then(error => {
+            // then throw it
+            throw error
+          })
+        }
+      })
+      .catch(error => {
+        this.setState({ error })
+      })
+    this.context.updateBookmark(bookmark);
+    this.props.history.push('/');
+  }
+
+  handleClickCancel = () => {
+    this.props.history.push('/')
+  }
+
+  componentDidMount() {
+    fetch(`${config.API_ENDPOINT}/${this.props.match.params.bookmarkId}`, {
       headers: {
         'content-type': 'application/json',
         'authorization': `bearer ${config.API_KEY}`
@@ -44,20 +93,12 @@ class UpdateBookmark extends Component {
         return res.json()
       })
       .then(data => {
-        title.value = ''
-        url.value = ''
-        description.value = ''
-        rating.value = ''
-        this.context.UpdateBookmark(data)
-        this.props.history.push('/')
+        const { title, description, rating, url } = data;
+        this.setState({ title, description, rating, url });
       })
       .catch(error => {
         this.setState({ error })
       })
-  }
-
-  handleClickCancel = () => {
-    this.props.history.push('/')
   }
 
   render() {
@@ -82,7 +123,8 @@ class UpdateBookmark extends Component {
               type='text'
               name='title'
               id='title'
-              placeholder='Great website!'
+              value={this.state.title}
+              onChange={this.updateTitle}
               required
             />
           </div>
@@ -96,7 +138,8 @@ class UpdateBookmark extends Component {
               type='url'
               name='url'
               id='url'
-              placeholder='https://www.great-website.com/'
+              value={this.state.url}
+              onChange={this.updateUrl}
               required
             />
           </div>
@@ -107,6 +150,8 @@ class UpdateBookmark extends Component {
             <textarea
               name='description'
               id='description'
+              value={this.state.description}
+              onChange={this.updateDescription}
             />
           </div>
           <div>
@@ -119,7 +164,8 @@ class UpdateBookmark extends Component {
               type='number'
               name='rating'
               id='rating'
-              defaultValue='1'
+              value={this.state.rating}
+              onChange={this.updateRating}
               min='1'
               max='5'
               required
