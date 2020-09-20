@@ -27,6 +27,15 @@ class App extends Component {
     })
   }
 
+  updateBookmark = bookmark => {
+    console.log(bookmark);
+    const newBookmarks = this.state.bookmarks.filter((b) => b.id !== bookmark.id);
+    console.log(newBookmarks);
+    this.setState({
+      bookmarks: [ ...newBookmarks, bookmark ],
+    })
+  }
+
   componentDidMount() {
     fetch(config.API_ENDPOINT, {
       method: 'GET',
@@ -49,6 +58,7 @@ class App extends Component {
     const contextValue = {
       bookmarks: this.state.bookmarks,
       addBookmark: this.addBookmark,
+      updateBookmark: this.updateBookmark,
     }
     return (
       <main className='App'>
